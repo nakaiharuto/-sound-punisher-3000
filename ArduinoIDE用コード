@@ -1,0 +1,38 @@
+// Sound Punisher 3000 - Arduino Sketch for Raspberry Pi Pico
+
+const int micPin = 26;        // ADCピン (KY-038のAO)
+const int motorPin = 15;      // モーター制御ピン
+const int threshold = 400;    // 騒音判定閾値
+const int motorTime = 500;    // モーター稼働時間（ミリ秒）
+const int cooldownTime = 1000; // モーター再稼働防止のクールタイム
+
+unsigned long lastActivated = 0;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(motorPin, OUTPUT);
+  digitalWrite(motorPin, LOW);
+}
+
+void loop() {
+  int micValue = analogRead(micPin);
+  unsigned long now = millis();
+
+  if (micValue > threshold && now - lastActivated > cooldownTime) {
+    // 騒音検知
+    digitalWrite(motorPin, HIGH);
+    delay(motorTime);
+    digitalWrite(motorPin, LOW);
+
+    lastActivated = now;
+
+    Serial.print("[DETECTED] ");
+    Serial.print("ADC: ");
+    Serial.println(micValue);
+  } else {
+    Serial.print("[QUIET] ADC: ");
+    Serial.println(micValue);
+  }
+
+  delay(100);
+}
